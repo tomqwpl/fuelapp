@@ -15,7 +15,8 @@ const schema = a.schema({
         locationId: a.id().required(),
         location: a.belongsTo('Location', 'locationId'),
         cars: a.hasMany("EventCar", "eventId"),
-        fuel: a.hasMany("Fuel", "eventId")
+        fuel: a.hasMany("Fuel", "eventId"),
+        eventType: a.enum(["Trackday", "Raceday", "Testing"]),
       })
       .authorization((allow) => [
         allow.group("admin"),
@@ -54,7 +55,8 @@ const schema = a.schema({
       addedBy: a.string().required(),
     })
     .authorization((allow) => [
-      allow.authenticated()
+        allow.group("admin"),
+        allow.group("mechanic"),
     ]),
 });
 export type Schema = ClientSchema<typeof schema>;

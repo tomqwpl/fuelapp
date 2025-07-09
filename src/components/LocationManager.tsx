@@ -1,53 +1,109 @@
-import { Button, Collection, Flex } from '@aws-amplify/ui-react';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource'; 
-import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router';
+import { Fragment, useEffect, useState } from 'react';
+import { DataGrid, type GridRowsProp, type GridColDef } from '@mui/x-data-grid';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import Button from '@mui/material/Button';
+import AddIcon from '@mui/icons-material/Add';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import {FormContainer, TextFieldElement} from 'react-hook-form-mui'
 
 const client = generateClient<Schema>();
 
-const promptCreateLocation = async () => {
- const name = window.prompt("Location name")
- if (name) {
-    const {errors} = await client.models.Location.create({
-        name
-    })    
+export interface NewDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
 
-    if (errors) {
+function NewDialog(props: NewDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose()
+  };  
+
+  const handleSubmit = (formData: any) => {
+    const submit = async () => {
+      const { errors } = await client.models.Location.create({name: formData.name})
+      if (errors) {
         console.log(errors)
+      }
     }
- }
+    submit().then(handleClose)
+  };  
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Create New Location</DialogTitle>
+      <DialogContent>
+        <FormContainer
+            onSuccess={handleSubmit}>
+            <TextFieldElement name="name" label="Name" required/>
+
+          <DialogActions>
+              <Button onClick={handleClose} variant="outlined">
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained">
+                Submit
+              </Button>
+          </DialogActions>
+        </FormContainer>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export default function LocationManager() {
-    const [locations, setLocations] = useState<Array<Schema["Location"]["type"]>>([]);
+  const [rows, setRows] = useState<GridRowsProp>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [newDialogOpen, setNewDialogOpen] = useState<boolean>(false)
 
   useEffect(() => {
     client.models.Location.observeQuery().subscribe({
-      next: (data) => setLocations([...data.items].sort((a, b)=>a.name.localeCompare(b.name))),
+      next: (data) => {
+        setRows(data.items.map(location=>{ return {
+          name: location.name,
+        }}))
+        setLoading(false)
+      }
     });
   }, []);
 
+  const columns: GridColDef[] = [
+    { field: "name", headerName: "Name", width: 200, sortable: true },
+  ];
+
+  const handleNewButtonClick = () => {
+    setNewDialogOpen(true)
+  }
+  const handleNewDialogClose = () => {
+    setNewDialogOpen(false)
+  }
+
   return (
-    <Flex justifyContent="space-between" direction="column">
-        <Button variation='primary' onClick={promptCreateLocation}>
-            +New
-        </Button>
-    <Collection
-        type="list"
-        direction="row"
-        wrap="wrap"
-        isPaginated
-        isSearchable
-        itemsPerPage={12}
-        items={locations}
-        >
-      {(locations, index) => (
-        <NavLink key={index} to={`/location/${encodeURIComponent(locations.id)}`}>
-          {locations.name}
-        </NavLink>
-      )}            
-    </Collection>
-    </Flex>
+    <Fragment>
+      <NewDialog 
+        open={newDialogOpen}
+        onClose={handleNewDialogClose}/> 
+      <Button 
+        variant='contained' 
+        startIcon={<AddIcon/>} 
+        onClick={handleNewButtonClick}>New</Button>
+
+      <DataGrid 
+        rows={rows} 
+        columns={columns} 
+        loading={loading}
+        showToolbar
+        initialState={{
+          sorting: {
+            sortModel: [{ field: 'name', sort: 'asc' }],
+          },
+        }}
+      />
+    </Fragment>
   )
 }

@@ -1,53 +1,105 @@
-import { Button, Collection, Flex } from '@aws-amplify/ui-react';
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource'; 
-import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router';
+import { Fragment, useEffect, useState } from 'react';
+import { DataGrid, type GridRowsProp, type GridColDef } from '@mui/x-data-grid';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { FormContainer, TextFieldElement } from 'react-hook-form-mui';
+import AddIcon from '@mui/icons-material/Add';
 
 const client = generateClient<Schema>();
 
-const promptCreateCar = async () => {
- const name = window.prompt("Driver/car name")
- if (name) {
-    const {errors} = await client.models.Car.create({
-        name
-    })    
-
-    if (errors) {
-        console.log(errors)
-    }
- }
+export interface NewDialogProps {
+  open: boolean;
+  onClose: () => void;
 }
 
+function NewDialog(props: NewDialogProps) {
+  const { onClose, open } = props;
+
+  const handleClose = () => {
+    onClose()
+  };  
+
+  const handleSubmit = (formData: any) => {
+    const submit = async () => {
+      const { errors } = await client.models.Car.create({name: formData.name})
+      if (errors) {
+        console.log(errors)
+      }
+    }
+    submit().then(handleClose)
+  };  
+
+  return (
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Create New Car</DialogTitle>
+      <DialogContent>
+        <FormContainer
+            onSuccess={handleSubmit}>
+            <TextFieldElement name="name" label="Name" required/>
+
+          <DialogActions>
+              <Button onClick={handleClose} variant="outlined">
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained">
+                Submit
+              </Button>
+          </DialogActions>
+        </FormContainer>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+
 export default function CarManager() {
-    const [cars, setCars] = useState<Array<Schema["Car"]["type"]>>([]);
+  const [rows, setRows] = useState<GridRowsProp>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [newDialogOpen, setNewDialogOpen] = useState<boolean>(false)
 
   useEffect(() => {
     client.models.Car.observeQuery().subscribe({
-      next: (data) => setCars([...data.items].sort((a, b)=>a.name.localeCompare(b.name))),
+      next: (data) => {
+        setRows(data.items.map(car=>{ return {
+          name: car.name,
+        }}))
+        setLoading(false)
+      }
     });
   }, []);
 
+  const columns: GridColDef[] = [
+    { field: "name", headerName: "Name", width: 200, sortable: true },
+  ];
+
+  const handleNewButtonClick = () => {
+    setNewDialogOpen(true)
+  }
+  const handleNewDialogClose = () => {
+    setNewDialogOpen(false)
+  }
+
   return (
-    <Flex justifyContent="space-between" direction="column">
-        <Button variation='primary' onClick={promptCreateCar}>
-            +New
-        </Button>
-    <Collection
-        type="list"
-        direction="row"
-        wrap="wrap"
-        isPaginated
-        isSearchable
-        itemsPerPage={12}
-        items={cars}
-        >
-      {(cars, index) => (
-        <NavLink key={index} to={`/car/${encodeURIComponent(cars.id)}`}>
-          {cars.name}
-        </NavLink>
-      )}            
-    </Collection>
-    </Flex>
+    <Fragment>
+      <NewDialog 
+        open={newDialogOpen}
+        onClose={handleNewDialogClose}/> 
+      <Button 
+        variant='contained' 
+        startIcon={<AddIcon/>} 
+        onClick={handleNewButtonClick}>New</Button>    
+      <DataGrid 
+        rows={rows} 
+        columns={columns} 
+        loading={loading}
+        showToolbar
+        initialState={{
+          sorting: {
+            sortModel: [{ field: 'name', sort: 'asc' }],
+          },
+        }}      
+      />
+    </Fragment>
   )
 }

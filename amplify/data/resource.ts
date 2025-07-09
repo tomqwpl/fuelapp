@@ -1,9 +1,15 @@
-import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
+import { type ClientSchema, a, defineData, defineFunction } from '@aws-amplify/backend';
+
+const fooHandler = defineFunction({
+  entry: './handler.ts'
+})
+
 const schema = a.schema({  
   Location: a.model({
         name:a.string().required(),
         events:a.hasMany('Event', 'locationId'),
       })
+      .identifier(['name'])
       .authorization((allow) => [
         allow.group("admin"),
         allow.authenticated().to(["read"])
@@ -28,6 +34,7 @@ const schema = a.schema({
         events: a.hasMany("EventCar", "carId"),
         fuel: a.hasMany("Fuel", "carId")
       })
+      .identifier(['name'])
       .authorization((allow) => [
         allow.group("admin"),
         allow.authenticated().to(["read"])
@@ -58,6 +65,12 @@ const schema = a.schema({
         allow.group("admin"),
         allow.group("mechanic"),
     ]),
+
+  Foo: a
+    .mutation()
+    .arguments({name: a.string().required()})
+    .returns(a.string())
+    .handler(a.handler.function(fooHandler))
 });
 export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({

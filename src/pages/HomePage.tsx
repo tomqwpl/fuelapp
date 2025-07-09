@@ -1,13 +1,14 @@
-import BeforeCard from '../components/BeforeCard'
-import AfterCard from '../components/AfterCard'
-import EventCard from '../components/EventCard'
+import CssBaseline from '@mui/material/CssBaseline';
+import BeforeCard from '../components/BeforeCard';
+import EventCard from '../components/EventCard';
+import AfterCard from '../components/AfterCard';
 
 function HomePage() {
   return (
     <>
-      <BeforeCard/>
-      <EventCard/>
-      <AfterCard/>
+    <BeforeCard/>
+    <EventCard/>
+    <AfterCard/>
     </>
   )
 }

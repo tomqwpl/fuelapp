@@ -6,10 +6,10 @@ import { NavLink } from 'react-router';
 
 const client = generateClient<Schema>();
 
-const promptCreateLocation = async () => {
- const name = window.prompt("Location name")
+const promptCreateCar = async () => {
+ const name = window.prompt("Driver/car name")
  if (name) {
-    const {errors} = await client.models.Location.create({
+    const {errors} = await client.models.Car.create({
         name
     })    
 
@@ -19,18 +19,18 @@ const promptCreateLocation = async () => {
  }
 }
 
-export default function LocationManager() {
-    const [locations, setLocations] = useState<Array<Schema["Location"]["type"]>>([]);
+export default function CarManager() {
+    const [cars, setCars] = useState<Array<Schema["Car"]["type"]>>([]);
 
   useEffect(() => {
-    client.models.Location.observeQuery().subscribe({
-      next: (data) => setLocations([...data.items].sort((a, b)=>a.name.localeCompare(b.name))),
+    client.models.Car.observeQuery().subscribe({
+      next: (data) => setCars([...data.items].sort((a, b)=>a.name.localeCompare(b.name))),
     });
   }, []);
 
   return (
     <Flex justifyContent="space-between" direction="column">
-        <Button variation='primary' onClick={promptCreateLocation}>
+        <Button variation='primary' onClick={promptCreateCar}>
             +New
         </Button>
     <Collection
@@ -40,11 +40,11 @@ export default function LocationManager() {
         isPaginated
         isSearchable
         itemsPerPage={12}
-        items={locations}
+        items={cars}
         >
-      {(locations, index) => (
-        <NavLink key={index} to={`/location/${encodeURIComponent(locations.id)}`}>
-          {locations.name}
+      {(cars, index) => (
+        <NavLink key={index} to={`/car/${encodeURIComponent(cars.id)}`}>
+          {cars.name}
         </NavLink>
       )}            
     </Collection>

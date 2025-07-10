@@ -13,7 +13,7 @@ export default function CarInfoPage() {
   useEffect(() => {
     if (carId) {
       const fetchData = async () => {
-        const { data, errors } = await client.models.Car.get({ id: carId })
+        const { data, errors } = await client.models.Car.get({ name: carId })
         if (errors) throw errors
         if (data) setCar(data)
       }

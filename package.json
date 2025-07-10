@@ -17,6 +17,7 @@
     "@mui/joy": "^5.0.0-beta.52",
     "@mui/material": "^7.2.0",
     "@mui/x-data-grid": "^8.7.0",
+    "@mui/x-date-pickers": "^7.29.4",
     "@react-router/node": "^7.6.3",
     "@react-router/serve": "^7.6.3",
     "aws-amplify": "^6.15.3",

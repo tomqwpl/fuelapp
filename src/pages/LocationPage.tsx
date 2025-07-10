@@ -13,7 +13,7 @@ export default function LocationInfoPage() {
   useEffect(() => {
     if (locationId) {
       const fetchData = async () => {
-        const { data, errors } = await client.models.Location.get({ id: locationId })
+        const { data, errors } = await client.models.Location.get({ name: locationId })
         if (errors) throw errors
         if (data) setLocation(data)
       }

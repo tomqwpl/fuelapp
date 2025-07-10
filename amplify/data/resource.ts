@@ -1,8 +1,4 @@
-import { type ClientSchema, a, defineData, defineFunction } from '@aws-amplify/backend';
-
-const fooHandler = defineFunction({
-  entry: './handler.ts'
-})
+import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 const schema = a.schema({  
   Location: a.model({

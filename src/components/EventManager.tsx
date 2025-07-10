@@ -1,113 +1,167 @@
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from '../../amplify/data/resource'; 
-import React, { useEffect, useState } from 'react';
-import TableContainer from '@mui/material/TableContainer';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import TableCell from '@mui/material/TableCell';
-import TableBody from '@mui/material/TableBody';
-import Collapse from '@mui/material/Collapse';
-import IconButton from '@mui/material/IconButton';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
+import { Fragment, useEffect, useState } from 'react';
 import Chip from '@mui/material/Chip';
+import AddIcon from '@mui/icons-material/Add';
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { DataGrid, type GridColDef, type GridRenderCellParams, type GridRowsProp } from '@mui/x-data-grid';
+import { FormContainer, SelectElement, TextFieldElement } from 'react-hook-form-mui';
+import {DatePickerElement} from 'react-hook-form-mui/date-pickers'
+
 
 const client = generateClient<Schema>();
 
-function Row(props: { event: RowData }) {
-  const { event } = props;
-  const [open, setOpen] = useState(false);
+export interface NewDialogProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+function NewDialog(props: NewDialogProps) {
+  const [locations, setLocations] = useState<Array<Schema["Location"]["type"]>>([]);
+  const { onClose, open } = props;
+
+  useEffect(() => {
+    const fetch = async () => {
+      const {data, errors} = await client.models.Location.list()
+      if (errors) {
+        console.log(errors)
+      }
+      setLocations(data)
+    }
+
+    fetch().catch(console.error)
+  }, []);
   
+  
+  const handleClose = () => {
+    onClose()
+  };  
+
+  const handleSubmit = (formData: any) => {
+    const submit = async () => {
+      const { errors } = await client.models.Location.create({name: formData.name})
+      if (errors) {
+        console.log(errors)
+      }
+    }
+    submit().then(handleClose)
+  };  
+
+  const eventTypes = client.enums.EventType.values()
+
   return (
-    <React.Fragment>
-      <TableRow sx={{ '& > *': { borderBottom: 'unset' } }}>
-        <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => {
-              setOpen(!open)
-            }}
-          >
-            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-          </IconButton>
-        </TableCell>
-        <TableCell>
-          {new Date(event.startDate).toLocaleDateString(undefined, {dateStyle: "full"})}
-        </TableCell>
-        <TableCell>{/*event.eventType*/}</TableCell>
-        <TableCell>{event.location.name}</TableCell>
-      </TableRow>
-      <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-          <Collapse in={open} timeout="auto" unmountOnExit>
-            <Box sx={{ margin: 1 }}>
-              <Typography variant="h6" gutterBottom component="div">
-                Attendees
-              </Typography>
-              <Stack>
-                {event.cars.map((car)=>(
-                  <Chip key={car.id} variant='outlined' label={car.car.name}/>
-                ))}
-              </Stack>
-            </Box>
-          </Collapse>
-        </TableCell>
-      </TableRow>
-    </React.Fragment>
+    <Dialog onClose={handleClose} open={open}>
+      <DialogTitle>Create New Event</DialogTitle>
+      <DialogContent>
+        <FormContainer
+            onSuccess={handleSubmit}>
+
+          <DatePickerElement name="startDate" label="Date" required/>
+          <TextFieldElement name="duration" label="Duration" type="number" required/>
+          <SelectElement name="eventType" label="Type" required options={eventTypes}/>
+          <SelectElement name="location" label="Circuit" required options={locations.map(l=>l.name)}/>
+
+          <DialogActions>
+              <Button onClick={handleClose} variant="outlined">
+                Cancel
+              </Button>
+              <Button type="submit" variant="contained">
+                Submit
+              </Button>
+          </DialogActions>
+        </FormContainer>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-interface RowData {
-  readonly id : string
-  readonly startDate : string
-  // readonly eventType : "Trackday" | "Raceday" | "Testing" | null
-  readonly location: {
-      readonly name: string;
-  };
-  readonly cars: {
-    readonly id: string
-      readonly car: {
-          readonly name: string;
-      };
-  }[];
-}
 
 export default function EventManager() {
-  const [events, setEvents] = useState<Array<RowData>>([]);
+  const [rows, setRows] = useState<GridRowsProp>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [newDialogOpen, setNewDialogOpen] = useState<boolean>(false)
 
   useEffect(() => {
     const sub = client.models.Event.observeQuery(
       {
-        selectionSet: ["id", /*"eventType",*/ "startDate", "location.name", "cars.id", "cars.car.name"],
+        selectionSet: ["id", "eventType", "startDate", "location.name", "cars.car.name"],
       }
     ).subscribe({
-      next: (data) => setEvents([...data.items]),
+      next: (data) => {
+        setRows(data.items.map(event=>{ return {
+          id: event.id,
+          date: event.startDate,
+          location: event.location.name,
+          type: event.eventType,
+          attendees: event.cars.map(car=>car.car.name)
+        }}))
+        setLoading(false)
+      }
     });
     return () => sub.unsubscribe();
   }, []);
 
+  const columns: GridColDef[] = [
+    { field: "date", 
+      headerName: "Date", 
+      width: 200, 
+      sortable: true, 
+      valueFormatter: (_value, row) => {
+        return new Date(row.date).toLocaleDateString(undefined, {dateStyle: "full"});
+      },
+    },
+    {
+      field: "type",
+      headerName: "Type",
+      width: 200,
+      sortable: true,
+    },
+    {
+      field: "location",
+      headerName: "Circuit",
+      width: 200,
+      sortable: true,
+    },
+    {
+      field: "attendees",
+      headerName: "Attendees",
+      width: 400,
+      renderCell: (params: GridRenderCellParams<any, string[]>) => (
+        (params.value||[]).map(car=>(
+          <Chip label={car}/>
+        ))
+      )
+    }
+  ];
+
+  const handleNewButtonClick = () => {
+    setNewDialogOpen(true)
+  }
+  const handleNewDialogClose = () => {
+    setNewDialogOpen(false)
+  }
+
   return (
-    <TableContainer component={Paper}>
-      <Table sx={{ minWidth: 650 }} aria-label="events table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Date</TableCell>
-            <TableCell>Type</TableCell>
-            <TableCell>Location</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {events.map((event) => (
-            <Row key={event.id} event={event} />          
-          ))}
-        </TableBody>
-      </Table>      
-    </TableContainer>
+    <Fragment>
+      <NewDialog 
+        open={newDialogOpen}
+        onClose={handleNewDialogClose}/> 
+      <Button
+        variant='contained' 
+        startIcon={<AddIcon/>} 
+        onClick={handleNewButtonClick}>New</Button>
+
+      <DataGrid
+        rows={rows} 
+        columns={columns} 
+        loading={loading}
+        showToolbar
+        initialState={{
+          sorting: {
+            sortModel: [{ field: 'date', sort: 'asc' }],
+          },
+        }}
+      />
+    </Fragment>
   )
 }

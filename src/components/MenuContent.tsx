@@ -1,4 +1,3 @@
-import * as React from 'react';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -10,7 +9,7 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
 import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 
 const mainListItems = [
   { text: 'Home', icon: <HomeRoundedIcon />, path: "/" },

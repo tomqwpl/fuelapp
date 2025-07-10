@@ -15,6 +15,7 @@ const schema = a.schema({
         allow.authenticated().to(["read"])
       ]),
 
+  EventType: a.enum(["Trackday", "Raceday", "Testing"]),
   Event: a.model({
         startDate: a.date().required(),
         endDate: a.date().required(),
@@ -22,7 +23,7 @@ const schema = a.schema({
         location: a.belongsTo('Location', 'locationId'),
         cars: a.hasMany("EventCar", "eventId"),
         fuel: a.hasMany("Fuel", "eventId"),
-        eventType: a.enum(["Trackday", "Raceday", "Testing"]),
+        eventType: a.ref('EventType'),
       })
       .authorization((allow) => [
         allow.group("admin"),
@@ -66,11 +67,6 @@ const schema = a.schema({
         allow.group("mechanic"),
     ]),
 
-  Foo: a
-    .mutation()
-    .arguments({name: a.string().required()})
-    .returns(a.string())
-    .handler(a.handler.function(fooHandler))
 });
 export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({

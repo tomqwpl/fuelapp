@@ -6,6 +6,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import MenuContent from './MenuContent';
 import OptionsMenu from './OptionsMenu';
+import { useAuthenticator } from '@aws-amplify/ui-react';
 
 const drawerWidth = 240;
 
@@ -21,6 +22,8 @@ const Drawer = styled(MuiDrawer)({
 });
 
 export default function SideMenu() {
+  const { user } = useAuthenticator((context) => [context.user]);
+
   return (
     <Drawer
       variant="permanent"
@@ -51,18 +54,9 @@ export default function SideMenu() {
           borderColor: 'divider',
         }}
       >
-        <Avatar
-          sizes="small"
-          alt="Riley Carter"
-          src="/static/images/avatar/7.jpg"
-          sx={{ width: 36, height: 36 }}
-        />
         <Box sx={{ mr: 'auto' }}>
-          <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: '16px' }}>
-            Riley Carter
-          </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            riley@email.com
+            { user.signInDetails?.loginId }
           </Typography>
         </Box>
         <OptionsMenu />

@@ -65,6 +65,7 @@ export default function LocationManager() {
     client.models.Location.observeQuery().subscribe({
       next: (data) => {
         setRows(data.items.map(location=>{ return {
+          id: location.name,
           name: location.name,
         }}))
         setLoading(false)

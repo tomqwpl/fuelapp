@@ -19,7 +19,7 @@ const schema = a.schema({
         location: a.belongsTo('Location', 'locationId'),
         cars: a.hasMany("EventCar", "eventId"),
         fuel: a.hasMany("Fuel", "eventId"),
-        eventType: a.ref('EventType'),
+        eventType: a.ref('EventType').required(),
       })
       .authorization((allow) => [
         allow.group("admin"),

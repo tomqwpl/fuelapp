@@ -1,9 +1,11 @@
-import { Button, Card, CardActions, CardContent, Grid, Skeleton, Stack, Typography } from '@mui/material';
+import { Fab, Skeleton, Stack, styled, Typography } from '@mui/material';
 import { generateClient } from 'aws-amplify/api';
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Schema } from '../../amplify/data/resource';
-import dayjs from 'dayjs';
-import { useNavigate, useParams } from 'react-router';
+import { useParams } from 'react-router';
+import EventFuelHistory from './components/EventFuelHistory';
+import AddIcon from '@mui/icons-material/Add';
+import AddFuelDialog from './components/AddFuelDialog';
 
 const client = generateClient<Schema>();
 
@@ -11,6 +13,7 @@ export default function FuelingPage() {
   const { eventId } = useParams();
   const [ event, setEvent ]  = useState<Schema["Event"]["type"]>()
   const [ eventCars, setEventCars ] = useState<Array<Schema["EventCar"]["type"]>>([])
+  const [ addFuelDialogOpen, setAddFuelDialogOpen ] = useState(false)
 
   useEffect(() => {
     if (eventId) {
@@ -50,12 +53,19 @@ export default function FuelingPage() {
     fetch().catch(console.error)
   }, []);
 
-  if (!event) {
+  if (!eventId || !event) {
     return <Skeleton variant="rectangular" width={210} height={118} />
   }
 
+  const handleAddButtonClick = () => {
+    setAddFuelDialogOpen(true)
+  }
+  const handleAddFuelDialogClose = () => {
+    setAddFuelDialogOpen(false)
+  }
+
   return (
-    <Stack>
+    <Stack spacing={1}>
       <Typography variant="h3">
         { event.locationId } 
       </Typography>
@@ -63,11 +73,22 @@ export default function FuelingPage() {
         { new Date(event.startDate).toLocaleDateString(undefined, {dateStyle: "full"}) }
       </Typography>
 
-      <Grid container spacing={2}>
-        {eventCars.map(car=>(
-          <Button>{car.carId}</Button>
-        ))}
-      </Grid>
+      <EventFuelHistory eventId={eventId}/>
+
+      <Fab
+        color="primary" 
+        aria-label="add" 
+        sx={{
+          position: "absolute",
+          bottom: 76,
+          right: 16
+        }}
+        onClick={handleAddButtonClick}>
+        <AddIcon/>
+      </Fab>
+      <AddFuelDialog open={addFuelDialogOpen}
+        eventId={eventId}
+        onClose={handleAddFuelDialogClose}/> 
     </Stack>
   )
 }

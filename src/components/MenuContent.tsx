@@ -7,14 +7,12 @@ import Stack from '@mui/material/Stack';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
-import LocalGasStationIcon from '@mui/icons-material/LocalGasStation';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import { Link } from 'react-router';
 
 const mainListItems = [
   { text: 'Home', icon: <HomeRoundedIcon />, path: "/" },
   { text: 'Setup', icon: <SettingsRoundedIcon /> , path: "/setup" },
-  { text: 'Fueling', icon: <LocalGasStationIcon /> , path: "/fueling" },
   { text: 'Reports', icon: <AssessmentIcon /> , path: "/reports" },
 ];
 

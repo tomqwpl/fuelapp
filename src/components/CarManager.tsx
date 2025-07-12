@@ -36,7 +36,7 @@ function NewDialog(props: NewDialogProps) {
       <DialogContent>
         <FormContainer
             onSuccess={handleSubmit}>
-            <TextFieldElement name="name" label="Name" required/>
+            <TextFieldElement name="name" label="Name" required autoFocus/>
 
           <DialogActions>
               <Button onClick={handleClose} variant="outlined">
@@ -62,6 +62,7 @@ export default function CarManager() {
     client.models.Car.observeQuery().subscribe({
       next: (data) => {
         setRows(data.items.map(car=>{ return {
+          id: car.name,
           name: car.name,
         }}))
         setLoading(false)
